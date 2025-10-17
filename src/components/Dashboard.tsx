@@ -4,14 +4,19 @@ import { Card } from './ui/card';
 import { MapPin, Zap, TrendingUp, Plus, Search, Menu, Clock, DollarSign, Building2, ChevronRight, Flame } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import ChargingSessionForm, { ChargingSessionData } from './ChargingSessionForm';
+import ActiveSessionTracker from './ActiveSessionTracker';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'map' | 'sessions'>('map');
   const [selectedLocation, setSelectedLocation] = useState<any | null>(null);
   const [locationsView, setLocationsView] = useState<'my-locations' | 'hot-spots'>('my-locations');
+  const [showSessionForm, setShowSessionForm] = useState(false);
+  const [activeSession, setActiveSession] = useState<ChargingSessionData | null>(null);
 
   // Mock data for hot locations
   const hotLocations = [
@@ -300,19 +305,29 @@ export default function Dashboard() {
         </Tabs>
 
         {/* Log Session Card */}
-        <Card className="bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 border-cyan-500/30 p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex-1">
-              <h3 className="text-cyan-400">I Could Be Charging</h3>
-              <p className="text-zinc-300 mt-2">
-                At a location where charging would be helpful? Log a session to help build demand data.
-              </p>
+        {!activeSession ? (
+          <Card className="bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 border-cyan-500/30 p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex-1">
+                <h3 className="text-cyan-400">I Could Be Charging</h3>
+                <p className="text-zinc-300 mt-2">
+                  At a location where charging would be helpful? Log a session to help build demand data.
+                </p>
+              </div>
+              <Button 
+                className="h-12 w-12 rounded-full bg-cyan-500 hover:bg-cyan-600 text-zinc-950 flex-shrink-0" 
+                onClick={() => setShowSessionForm(true)}
+              >
+                <Plus className="w-6 h-6" />
+              </Button>
             </div>
-            <Button className="h-12 w-12 rounded-full bg-cyan-500 hover:bg-cyan-600 text-zinc-950 flex-shrink-0">
-              <Plus className="w-6 h-6" />
-            </Button>
-          </div>
-        </Card>
+          </Card>
+        ) : (
+          <ActiveSessionTracker 
+            session={activeSession} 
+            onEndSession={() => setActiveSession(null)} 
+          />
+        )}
       </div>
 
       {/* Bottom Navigation (if needed for mobile) */}
@@ -443,6 +458,19 @@ export default function Dashboard() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Charging Session Form */}
+      <Dialog open={showSessionForm} onOpenChange={setShowSessionForm}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100 max-w-md max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle className="text-cyan-400">Log Charging Session</DialogTitle>
+          </DialogHeader>
+          <ChargingSessionForm onSubmit={(sessionData) => {
+            setActiveSession(sessionData);
+            setShowSessionForm(false);
+          }} />
         </DialogContent>
       </Dialog>
     </div>
