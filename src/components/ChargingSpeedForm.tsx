@@ -2,7 +2,7 @@ import { motion } from 'motion/react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Slider } from './ui/slider';
-import { Zap, Clock } from 'lucide-react';
+import { Zap, Clock, MapPin } from 'lucide-react';
 
 interface ChargingSpeedFormProps {
   speed: number;
@@ -27,6 +27,12 @@ export default function ChargingSpeedForm({ speed, setSpeed, onNext }: ChargingS
     if (kw <= 22) return '4-8 hours for full charge';
     if (kw <= 100) return '30-45 minutes for 80%';
     return '15-25 minutes for 80%';
+  };
+
+  const getTypicalScenario = (kw: number) => {
+    if (kw <= 22) return 'At home overnight, at work during the day, or at apartments/destinations where you park for hours.';
+    if (kw <= 100) return 'On road trips or errands — coffee shops, shopping centers, or quick stops during longer drives.';
+    return 'Highway rest stops and dedicated charging stations for minimal wait time during long-distance travel.';
   };
 
   return (
@@ -96,6 +102,16 @@ export default function ChargingSpeedForm({ speed, setSpeed, onNext }: ChargingS
                 <h3 className="text-cyan-400">Estimated Time</h3>
                 <p className="text-zinc-300 mt-1">
                   {getEstimatedTime(speed)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <MapPin className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-1" />
+              <div>
+                <h3 className="text-cyan-400">Typical Scenario</h3>
+                <p className="text-zinc-300 mt-1">
+                  {getTypicalScenario(speed)}
                 </p>
               </div>
             </div>

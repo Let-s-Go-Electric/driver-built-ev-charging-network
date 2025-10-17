@@ -1,11 +1,17 @@
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { MapPin, Zap, TrendingUp, Plus, Search, Menu } from 'lucide-react';
-import { motion } from 'motion/react';
+import { MapPin, Zap, TrendingUp, Plus, Search, Menu, Clock, DollarSign, Building2, ChevronRight, Flame } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Badge } from './ui/badge';
+import { Progress } from './ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'map' | 'sessions'>('map');
+  const [selectedLocation, setSelectedLocation] = useState<any | null>(null);
+  const [locationsView, setLocationsView] = useState<'my-locations' | 'hot-spots'>('my-locations');
 
   // Mock data for hot locations
   const hotLocations = [
@@ -13,6 +19,109 @@ export default function Dashboard() {
     { name: 'City Park', demand: 89, trend: '+8%' },
     { name: 'Tech Campus', demand: 134, trend: '+15%' }
   ];
+
+  // Mock data for user's tracked locations
+  const myLocations = [
+    {
+      id: 1,
+      name: 'Oakwood Apartments',
+      address: '1234 Main St',
+      requests: 47,
+      status: 'Planning',
+      chargerTypes: ['Level 2 (7kW)', 'DC Fast (50kW)'],
+      pricing: 'Pay-per-use ($0.35/kWh)',
+      timeline: {
+        current: 'Planning',
+        steps: ['Considering', 'Planning', 'Installing', 'Live'],
+        progress: 50,
+        estimatedCompletion: 'Q2 2026'
+      }
+    },
+    {
+      id: 2,
+      name: 'Valley View Office Park',
+      address: '5678 Business Blvd',
+      requests: 89,
+      status: 'Installing',
+      chargerTypes: ['Level 2 (11kW)'],
+      pricing: 'Free for employees',
+      timeline: {
+        current: 'Installing',
+        steps: ['Considering', 'Planning', 'Installing', 'Live'],
+        progress: 75,
+        estimatedCompletion: 'Q1 2026'
+      }
+    },
+    {
+      id: 3,
+      name: 'Riverside Coffee',
+      address: '910 River Rd',
+      requests: 23,
+      status: 'Not Yet Considering',
+      chargerTypes: [],
+      pricing: 'TBD',
+      timeline: {
+        current: 'Not Yet Considering',
+        steps: ['Considering', 'Planning', 'Installing', 'Live'],
+        progress: 0,
+        estimatedCompletion: 'TBD'
+      }
+    }
+  ];
+
+  // Map markers with location data
+  const mapMarkers = [
+    {
+      id: 1,
+      name: 'Oakwood Apartments',
+      x: '33%',
+      y: '25%',
+      size: 'lg',
+      ...myLocations[0]
+    },
+    {
+      id: 2,
+      name: 'Valley View Office Park',
+      x: '75%',
+      y: '50%',
+      size: 'md',
+      ...myLocations[1]
+    },
+    {
+      id: 3,
+      name: 'Riverside Coffee',
+      x: '50%',
+      y: '75%',
+      size: 'xl',
+      ...myLocations[2]
+    }
+  ];
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Live':
+        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+      case 'Installing':
+        return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+      case 'Planning':
+        return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
+      case 'Considering':
+        return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
+      default:
+        return 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20';
+    }
+  };
+
+  const getProgressForStatus = (status: string) => {
+    const statusMap: Record<string, number> = {
+      'Not Yet Considering': 0,
+      'Considering': 25,
+      'Planning': 50,
+      'Installing': 75,
+      'Live': 100
+    };
+    return statusMap[status] || 0;
+  };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -35,7 +144,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-6 py-6 space-y-6">
+      <div className="max-w-4xl mx-auto px-6 py-6 space-y-6 pb-32 md:pb-6">
         {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
@@ -58,80 +167,137 @@ export default function Dashboard() {
               </div>
             </div>
             
-            {/* Demand markers */}
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="absolute top-1/4 left-1/3 w-16 h-16 rounded-full bg-cyan-500/30 border-2 border-cyan-500 flex items-center justify-center"
-            >
-              <MapPin className="w-8 h-8 text-cyan-400" />
-            </motion.div>
+            {/* Clickable Demand markers */}
+            {mapMarkers.map((marker, index) => {
+              const sizeClasses = {
+                sm: 'w-10 h-10',
+                md: 'w-12 h-12',
+                lg: 'w-16 h-16',
+                xl: 'w-20 h-20'
+              };
+              const iconSizes = {
+                sm: 'w-5 h-5',
+                md: 'w-6 h-6',
+                lg: 'w-8 h-8',
+                xl: 'w-10 h-10'
+              };
+              
+              return (
+                <motion.button
+                  key={marker.id}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2 + index * 0.1 }}
+                  onClick={() => setSelectedLocation(marker)}
+                  className={`absolute ${sizeClasses[marker.size as keyof typeof sizeClasses]} rounded-full bg-cyan-500/30 border-2 border-cyan-500 flex items-center justify-center hover:bg-cyan-500/50 cursor-pointer transition-all hover:scale-110`}
+                  style={{ left: marker.x, top: marker.y }}
+                >
+                  <MapPin className={`${iconSizes[marker.size as keyof typeof iconSizes]} text-cyan-400`} />
+                </motion.button>
+              );
+            })}
 
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.3 }}
-              className="absolute top-1/2 right-1/4 w-12 h-12 rounded-full bg-cyan-500/30 border-2 border-cyan-500 flex items-center justify-center"
-            >
-              <MapPin className="w-6 h-6 text-cyan-400" />
-            </motion.div>
-
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.4 }}
-              className="absolute bottom-1/4 left-1/2 w-20 h-20 rounded-full bg-cyan-500/30 border-2 border-cyan-500 flex items-center justify-center"
-            >
-              <MapPin className="w-10 h-10 text-cyan-400" />
-            </motion.div>
-
-            <div className="relative z-10 text-center space-y-2">
+            <div className="relative z-0 text-center space-y-2 pointer-events-none">
               <MapPin className="w-12 h-12 text-cyan-400 mx-auto" />
               <p className="text-zinc-400">Interactive Demand Map</p>
-              <p className="text-zinc-600">Showing charging demand hotspots</p>
+              <p className="text-zinc-600">Click markers for details</p>
             </div>
           </div>
         </Card>
 
-        {/* Hot Locations Dashboard */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-cyan-400">🔥 Hot Locations</h3>
-            <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300">
-              See more
-            </Button>
-          </div>
+        {/* Locations Tabs Section */}
+        <Tabs defaultValue="my-locations" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-zinc-900 border border-zinc-800">
+            <TabsTrigger 
+              value="my-locations" 
+              className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400 data-[state=inactive]:text-zinc-300"
+            >
+              📍 My Locations
+            </TabsTrigger>
+            <TabsTrigger 
+              value="hot-spots" 
+              className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400 data-[state=inactive]:text-zinc-300"
+            >
+              🔥 Hot Spots
+            </TabsTrigger>
+          </TabsList>
           
-          <div className="grid gap-3">
-            {hotLocations.map((location, index) => (
-              <motion.div
-                key={location.name}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="bg-zinc-900 border-zinc-800 p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-                        <MapPin className="w-5 h-5 text-cyan-400" />
+          <TabsContent value="my-locations" className="mt-4">
+            <div className="grid gap-3">
+              {myLocations.map((location, index) => (
+                <motion.div
+                  key={location.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card 
+                    className="bg-zinc-900 border-zinc-800 p-4 cursor-pointer hover:border-cyan-500/50 transition-colors"
+                    onClick={() => setSelectedLocation(location)}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3 flex-1">
+                          <div className="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                            <Building2 className="w-5 h-5 text-cyan-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-zinc-200">{location.name}</p>
+                            <p className="text-zinc-500">{location.address}</p>
+                            <p className="text-zinc-600 mt-1">{location.requests} requests</p>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-zinc-500 flex-shrink-0" />
                       </div>
-                      <div>
-                        <p className="text-zinc-200">{location.name}</p>
-                        <p className="text-zinc-500">{location.demand} requests</p>
+                      
+                      <div className="flex items-center gap-2">
+                        <Badge className={`${getStatusColor(location.status)} border`}>
+                          {location.status}
+                        </Badge>
+                        {location.timeline.estimatedCompletion !== 'TBD' && (
+                          <span className="text-zinc-500">ETA: {location.timeline.estimatedCompletion}</span>
+                        )}
+                      </div>
+                      
+                      <Progress value={location.timeline.progress} className="h-2" />
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="hot-spots" className="mt-4">
+            <div className="grid gap-3">
+              {hotLocations.map((location, index) => (
+                <motion.div
+                  key={location.name}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card className="bg-zinc-900 border-zinc-800 p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+                          <Flame className="w-5 h-5 text-orange-400" />
+                        </div>
+                        <div>
+                          <p className="text-zinc-200">{location.name}</p>
+                          <p className="text-zinc-500">{location.demand} requests</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-emerald-400" />
+                        <span className="text-emerald-400">{location.trend}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-emerald-400" />
-                      <span className="text-emerald-400">{location.trend}</span>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
 
         {/* Log Session Card */}
         <Card className="bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 border-cyan-500/30 p-6">
@@ -166,6 +332,119 @@ export default function Dashboard() {
           </button>
         </div>
       </div>
+
+      {/* Location Details Dialog */}
+      <Dialog open={!!selectedLocation} onOpenChange={(open) => !open && setSelectedLocation(null)}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100 max-w-md" aria-describedby={undefined}>
+          {selectedLocation && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-cyan-400 flex items-center gap-2">
+                  <Building2 className="w-5 h-5" />
+                  {selectedLocation.name}
+                </DialogTitle>
+                <p className="text-zinc-500 mt-1">{selectedLocation.address}</p>
+              </DialogHeader>
+
+              <div className="space-y-6 mt-4">
+                {/* Status */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-zinc-400">Current Status</span>
+                    <Badge className={`${getStatusColor(selectedLocation.status)} border`}>
+                      {selectedLocation.status}
+                    </Badge>
+                  </div>
+                  <Progress value={selectedLocation.timeline.progress} className="h-2" />
+                  <div className="flex justify-between mt-2 text-zinc-600">
+                    {selectedLocation.timeline.steps.map((step: string, idx: number) => (
+                      <span 
+                        key={step} 
+                        className={`text-xs ${
+                          idx <= selectedLocation.timeline.steps.indexOf(selectedLocation.timeline.current)
+                            ? 'text-cyan-400'
+                            : 'text-zinc-600'
+                        }`}
+                      >
+                        {step}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Demand Info */}
+                <div className="p-4 bg-cyan-500/10 border border-cyan-500/20 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="w-5 h-5 text-cyan-400" />
+                    <span className="text-cyan-400">Community Demand</span>
+                  </div>
+                  <p className="text-zinc-300">
+                    <span className="text-white">{selectedLocation.requests}</span> drivers have requested charging at this location
+                  </p>
+                </div>
+
+                {/* Charger Types */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Zap className="w-5 h-5 text-cyan-400" />
+                    <h4 className="text-cyan-400">Charger Types</h4>
+                  </div>
+                  {selectedLocation.chargerTypes.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedLocation.chargerTypes.map((type: string) => (
+                        <div key={type} className="flex items-center gap-2 p-2 bg-zinc-950 rounded border border-zinc-800">
+                          <div className="w-2 h-2 rounded-full bg-cyan-400" />
+                          <span className="text-zinc-300">{type}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-zinc-500 italic">No chargers planned yet</p>
+                  )}
+                </div>
+
+                {/* Pricing */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <DollarSign className="w-5 h-5 text-cyan-400" />
+                    <h4 className="text-cyan-400">Pricing Model</h4>
+                  </div>
+                  <div className="p-3 bg-zinc-950 rounded border border-zinc-800">
+                    <p className="text-zinc-300">{selectedLocation.pricing}</p>
+                  </div>
+                </div>
+
+                {/* Timeline */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Clock className="w-5 h-5 text-cyan-400" />
+                    <h4 className="text-cyan-400">Expected Timeline</h4>
+                  </div>
+                  <div className="p-3 bg-zinc-950 rounded border border-zinc-800">
+                    <p className="text-zinc-300">
+                      {selectedLocation.timeline.estimatedCompletion !== 'TBD' ? (
+                        <>
+                          Estimated completion: <span className="text-white">{selectedLocation.timeline.estimatedCompletion}</span>
+                        </>
+                      ) : (
+                        <span className="text-zinc-500 italic">Timeline to be determined</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {selectedLocation.status === 'Not Yet Considering' && (
+                  <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                    <p className="text-yellow-400">
+                      💡 This location needs more community support to Go Electric! Keep logging demand to help make it happen.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

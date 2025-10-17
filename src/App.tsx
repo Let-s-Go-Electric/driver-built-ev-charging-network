@@ -10,8 +10,8 @@ export default function App() {
   const [currentStep, setCurrentStep] = useState(0);
   const [setupComplete, setSetupComplete] = useState(false);
   const [userLocations, setUserLocations] = useState<string[]>([]);
-  const [chargingSpeed, setChargingSpeed] = useState(50);
-  const [autoLogging, setAutoLogging] = useState(false);
+  const [chargingSpeed, setChargingSpeed] = useState(11);
+  const [autoLogging, setAutoLogging] = useState(true);
 
   const handleNextStep = () => {
     setCurrentStep(prev => prev + 1);

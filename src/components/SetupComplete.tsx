@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { CheckCircle, Sparkles } from 'lucide-react';
+import { CheckCircle, Sparkles, TrendingUp } from 'lucide-react';
 
 interface SetupCompleteProps {
   onComplete: () => void;
@@ -49,13 +49,16 @@ export default function SetupComplete({ onComplete }: SetupCompleteProps) {
               <div>
                 <h3 className="text-cyan-400">Thank You!</h3>
                 <p className="text-zinc-300 mt-2">
-                  Your input helps us understand where EV charging infrastructure is needed most. Together, we're building a network that works for real drivers.
+                  Your input helps us understand where EV charging infrastructure is needed most. Your demand creates a "Go Electric!" score that businesses, apartments, and workplaces can view. Together we're building a network that works for real drivers.
                 </p>
               </div>
             </div>
 
             <div className="pt-4 border-t border-zinc-800 space-y-3">
-              <h3 className="text-cyan-400">What's Next?</h3>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-cyan-400" />
+                <h3 className="text-cyan-400">What's Next?</h3>
+              </div>
               <ul className="space-y-2 text-zinc-300">
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-400 flex-shrink-0">→</span>
@@ -63,11 +66,11 @@ export default function SetupComplete({ onComplete }: SetupCompleteProps) {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-400 flex-shrink-0">→</span>
-                  <span>Log charging opportunities as you go</span>
+                  <span>Track installation status at your locations (considering, planning, installing, or live)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-400 flex-shrink-0">→</span>
-                  <span>See where others want charging too</span>
+                  <span>Log charging opportunities as you go</span>
                 </li>
               </ul>
             </div>

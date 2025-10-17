@@ -39,7 +39,7 @@ export default function Welcome({ onNext }: WelcomeProps) {
         >
           <Card className="bg-zinc-900 border-zinc-800 p-6 space-y-6">
             <div>
-              <h2>Why EV Charging Matters</h2>
+              <h2 className="text-white">Why EV Charging Matters</h2>
               <p className="text-zinc-400 mt-2">
                 Electric vehicles are the future, but charging infrastructure needs to be where <em>you</em> need it most.
               </p>
