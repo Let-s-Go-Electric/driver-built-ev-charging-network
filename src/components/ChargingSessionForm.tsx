@@ -125,7 +125,16 @@ export default function ChargingSessionForm({ onSubmit }: ChargingSessionFormPro
           <DollarSign className="w-4 h-4 text-cyan-400" />
           Pricing Preference
         </Label>
-        <RadioGroup value={pricingModel} onValueChange={(value: any) => setPricingModel(value)}>
+        <RadioGroup value={pricingModel} onValueChange={(value: any) => {
+          setPricingModel(value);
+          if (value === 'per-kwh') {
+            setPrice(0.30);
+          } else if (value === 'subscription') {
+            setPrice(25);
+          } else if (value === 'free') {
+            setPrice(0);
+          }
+        }}>
           <div className="space-y-3">
             <label
               className={`flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${

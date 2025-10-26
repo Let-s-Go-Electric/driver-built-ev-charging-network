@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { MapPin, Zap, TrendingUp, Plus, Search, Menu, Clock, DollarSign, Building2, ChevronRight, Flame } from 'lucide-react';
+import { MapPin, Zap, TrendingUp, Plus, Search, Menu, Clock, DollarSign, Building2, ChevronRight, Flame, Settings as SettingsIcon, GraduationCap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
@@ -10,13 +10,20 @@ import { Progress } from './ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import ChargingSessionForm, { ChargingSessionData } from './ChargingSessionForm';
 import ActiveSessionTracker from './ActiveSessionTracker';
+import Settings from './Settings';
 
-export default function Dashboard() {
+interface DashboardProps {
+  onShowTutorial?: () => void;
+}
+
+export default function Dashboard({ onShowTutorial }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<'map' | 'sessions'>('map');
   const [selectedLocation, setSelectedLocation] = useState<any | null>(null);
   const [locationsView, setLocationsView] = useState<'my-locations' | 'hot-spots'>('my-locations');
   const [showSessionForm, setShowSessionForm] = useState(false);
   const [activeSession, setActiveSession] = useState<ChargingSessionData | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   // Mock data for hot locations
   const hotLocations = [
@@ -142,7 +149,12 @@ export default function Dashboard() {
               <p className="text-zinc-500">Network Dashboard</p>
             </div>
           </div>
-          <Button size="icon" variant="ghost" className="text-zinc-400">
+          <Button 
+            size="icon" 
+            variant="ghost" 
+            className="text-zinc-400 hover:text-cyan-400 transition-colors w-12 h-12"
+            onClick={() => setShowMenu(true)}
+          >
             <Menu className="w-6 h-6" />
           </Button>
         </div>
@@ -471,6 +483,50 @@ export default function Dashboard() {
             setActiveSession(sessionData);
             setShowSessionForm(false);
           }} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Menu Dialog */}
+      <Dialog open={showMenu} onOpenChange={setShowMenu}>
+        <DialogContent 
+          className="bg-zinc-900 border-zinc-800 text-zinc-100 w-64 top-4 right-16 left-auto translate-x-0 translate-y-0" 
+          aria-describedby={undefined}
+        >
+          <DialogHeader>
+            <DialogTitle className="text-cyan-400">Menu</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <Button
+              onClick={() => {
+                setShowMenu(false);
+                onShowTutorial?.();
+              }}
+              className="w-full h-14 bg-zinc-800 hover:bg-cyan-500/10 border border-zinc-700 hover:border-cyan-500/50 text-zinc-100 hover:text-cyan-400 flex items-center gap-3 justify-start px-5 transition-all"
+            >
+              <GraduationCap className="w-5 h-5" />
+              <span>Tutorial</span>
+            </Button>
+            <Button
+              onClick={() => {
+                setShowMenu(false);
+                setShowSettings(true);
+              }}
+              className="w-full h-14 bg-zinc-800 hover:bg-cyan-500/10 border border-zinc-700 hover:border-cyan-500/50 text-zinc-100 hover:text-cyan-400 flex items-center gap-3 justify-start px-5 transition-all"
+            >
+              <SettingsIcon className="w-5 h-5" />
+              <span>Settings</span>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Settings Dialog */}
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100 max-w-md max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle className="text-cyan-400">Settings</DialogTitle>
+          </DialogHeader>
+          <Settings onClose={() => setShowSettings(false)} />
         </DialogContent>
       </Dialog>
     </div>
