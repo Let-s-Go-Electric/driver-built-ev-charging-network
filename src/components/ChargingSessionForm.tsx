@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
@@ -25,30 +25,47 @@ export default function ChargingSessionForm({ onSubmit }: ChargingSessionFormPro
   const [pricingModel, setPricingModel] = useState<'per-kwh' | 'subscription' | 'free'>('per-kwh');
   const [price, setPrice] = useState(0.30);
   const [duration, setDuration] = useState(2);
+  const [distanceUnit, setDistanceUnit] = useState<'mi' | 'km'>('mi');
+
+  // Load settings from localStorage
+  useEffect(() => {
+    const savedDistanceUnit = localStorage.getItem('setting_distance_unit');
+    const savedSpeed = localStorage.getItem('setting_default_speed');
+    const savedPricingModel = localStorage.getItem('setting_pricing_model');
+    const savedPrice = localStorage.getItem('setting_default_price');
+
+    if (savedDistanceUnit) setDistanceUnit(savedDistanceUnit as 'mi' | 'km');
+    if (savedSpeed) setSpeed(parseFloat(savedSpeed));
+    if (savedPricingModel) {
+      setPricingModel(savedPricingModel as 'per-kwh' | 'subscription' | 'free');
+    }
+    if (savedPrice) setPrice(parseFloat(savedPrice));
+  }, []);
 
   const getSpeedDescription = (kw: number) => {
+    const unit = distanceUnit;
     if (kw <= 7) {
       return {
         title: 'Level 1 (1.4 - 7 kW)',
-        description: 'Perfect for overnight charging at home. Adds 3-5 miles per hour. Most affordable option for daily charging needs.',
+        description: `Perfect for overnight charging at home. Adds ${unit === 'mi' ? '3-5 miles' : '5-8 km'} per hour. Most affordable option for daily charging needs.`,
         icon: '🏠'
       };
     } else if (kw <= 19) {
       return {
         title: 'Level 2 (7 - 19 kW)',
-        description: 'Ideal for workplace and public charging. Adds 15-25 miles per hour. Best balance of cost and convenience.',
+        description: `Ideal for workplace and public charging. Adds ${unit === 'mi' ? '15-25 miles' : '24-40 km'} per hour. Best balance of cost and convenience.`,
         icon: '⚡'
       };
     } else if (kw <= 50) {
       return {
         title: 'Level 2+ (19 - 50 kW)',
-        description: 'Faster public charging for quick top-ups. Adds 25-50 miles per hour. Good for shopping trips and errands.',
+        description: `Faster public charging for quick top-ups. Adds ${unit === 'mi' ? '25-50 miles' : '40-80 km'} per hour. Good for shopping trips and errands.`,
         icon: '🔌'
       };
     } else {
       return {
         title: 'DC Fast Charging (50+ kW)',
-        description: 'Rapid charging for road trips. Adds 100+ miles per hour. Premium pricing for maximum speed.',
+        description: `Rapid charging for road trips. Adds ${unit === 'mi' ? '100+ miles' : '160+ km'} per hour. Premium pricing for maximum speed.`,
         icon: '⚡️'
       };
     }

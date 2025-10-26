@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { MapPin, Zap, TrendingUp, Plus, Search, Menu, Clock, DollarSign, Building2, ChevronRight, Flame, Settings as SettingsIcon, GraduationCap } from 'lucide-react';
+import { MapPin, Zap, TrendingUp, Plus, Search, Menu, Clock, DollarSign, Building2, ChevronRight, Flame, Settings as SettingsIcon, GraduationCap, Battery } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
@@ -24,6 +24,76 @@ export default function Dashboard({ onShowTutorial }: DashboardProps) {
   const [activeSession, setActiveSession] = useState<ChargingSessionData | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [distanceUnit, setDistanceUnit] = useState<'mi' | 'km'>('mi');
+
+  // Load distance unit setting
+  useEffect(() => {
+    const savedDistanceUnit = localStorage.getItem('setting_distance_unit');
+    if (savedDistanceUnit) {
+      setDistanceUnit(savedDistanceUnit as 'mi' | 'km');
+    }
+  }, [showSettings]); // Reload when settings close
+
+  // Function to calculate distance from energy
+  const calculateDistance = (energyKwh: number) => {
+    if (distanceUnit === 'mi') {
+      return Math.round(energyKwh * 3.5); // 3.5 miles per kWh
+    } else {
+      return Math.round(energyKwh * 5.6); // 5.6 km per kWh (3.5 miles * 1.6)
+    }
+  };
+
+  // Mock data for past charging sessions
+  const pastSessions = [
+    {
+      id: 1,
+      location: 'Oakwood Apartments',
+      address: '1234 Main St',
+      date: 'Oct 25, 2025',
+      time: '7:30 PM',
+      duration: 3.5,
+      speed: 11,
+      energyGained: 38.5,
+      cost: 11.55,
+      pricingModel: 'per-kwh' as const
+    },
+    {
+      id: 2,
+      location: 'Valley View Office Park',
+      address: '5678 Business Blvd',
+      date: 'Oct 24, 2025',
+      time: '9:00 AM',
+      duration: 6.0,
+      speed: 7,
+      energyGained: 42.0,
+      cost: 0,
+      pricingModel: 'free' as const
+    },
+    {
+      id: 3,
+      location: 'Downtown Supercharger',
+      address: '789 Market St',
+      date: 'Oct 22, 2025',
+      time: '2:15 PM',
+      duration: 0.5,
+      speed: 150,
+      energyGained: 75.0,
+      cost: 30.00,
+      pricingModel: 'subscription' as const
+    },
+    {
+      id: 4,
+      location: 'Riverside Coffee',
+      address: '910 River Rd',
+      date: 'Oct 20, 2025',
+      time: '11:00 AM',
+      duration: 2.0,
+      speed: 11,
+      energyGained: 22.0,
+      cost: 6.60,
+      pricingModel: 'per-kwh' as const
+    }
+  ];
 
   // Mock data for hot locations
   const hotLocations = [
@@ -161,7 +231,9 @@ export default function Dashboard({ onShowTutorial }: DashboardProps) {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-6 py-6 space-y-6 pb-32 md:pb-6">
+      <div className="max-w-4xl mx-auto px-6 py-6 space-y-6 pb-32 lg:pb-32">
+        {activeTab === 'map' && (
+          <>
         {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
@@ -294,7 +366,7 @@ export default function Dashboard({ onShowTutorial }: DashboardProps) {
                   transition={{ delay: index * 0.1 }}
                 >
                   <Card className="bg-zinc-900 border-zinc-800 p-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
                           <Flame className="w-5 h-5 text-orange-400" />
@@ -304,9 +376,12 @@ export default function Dashboard({ onShowTutorial }: DashboardProps) {
                           <p className="text-zinc-500">{location.demand} requests</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-emerald-400" />
-                        <span className="text-emerald-400">{location.trend}</span>
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-emerald-400" />
+                          <span className="text-emerald-400">{location.trend}</span>
+                        </div>
+                        <p className="text-zinc-600">This week</p>
                       </div>
                     </div>
                   </Card>
@@ -340,22 +415,116 @@ export default function Dashboard({ onShowTutorial }: DashboardProps) {
             onEndSession={() => setActiveSession(null)} 
           />
         )}
+        </>
+        )}
+
+        {activeTab === 'sessions' && (
+          <div className="space-y-4">
+            <h2 className="text-cyan-400">Past Charging Sessions</h2>
+            <div className="grid gap-4">
+              {pastSessions.map((session, index) => (
+                <motion.div
+                  key={session.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card className="bg-zinc-900 border-zinc-800 p-4">
+                    <div className="space-y-3">
+                      {/* Location and Date */}
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                            <MapPin className="w-5 h-5 text-cyan-400" />
+                          </div>
+                          <div>
+                            <p className="text-zinc-200">{session.location}</p>
+                            <p className="text-zinc-500">{session.address}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-zinc-400">{session.date}</p>
+                          <p className="text-zinc-500">{session.time}</p>
+                        </div>
+                      </div>
+
+                      {/* Session Details Grid */}
+                      <div className="grid grid-cols-2 gap-3 pt-2">
+                        <div className="p-3 bg-zinc-950 rounded-lg border border-zinc-800">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Clock className="w-4 h-4 text-cyan-400" />
+                            <p className="text-zinc-500">Duration</p>
+                          </div>
+                          <p className="text-zinc-200">{session.duration} hours</p>
+                        </div>
+
+                        <div className="p-3 bg-zinc-950 rounded-lg border border-zinc-800">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Zap className="w-4 h-4 text-cyan-400" />
+                            <p className="text-zinc-500">Speed</p>
+                          </div>
+                          <p className="text-zinc-200">{session.speed} kW</p>
+                        </div>
+
+                        <div className="p-3 bg-zinc-950 rounded-lg border border-zinc-800">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Battery className="w-4 h-4 text-cyan-400" />
+                            <p className="text-zinc-500">Energy</p>
+                          </div>
+                          <div className="flex items-baseline justify-between">
+                            <p className="text-zinc-200">{session.energyGained} kWh</p>
+                            <p className="text-zinc-600">≈ +{calculateDistance(session.energyGained)} {distanceUnit}</p>
+                          </div>
+                        </div>
+
+                        <div className="p-3 bg-zinc-950 rounded-lg border border-zinc-800">
+                          <div className="flex items-center gap-2 mb-1">
+                            <DollarSign className="w-4 h-4 text-cyan-400" />
+                            <p className="text-zinc-500">Cost</p>
+                          </div>
+                          <p className="text-zinc-200">
+                            {session.pricingModel === 'free' ? 'Free' : `$${session.cost.toFixed(2)}`}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Pricing Model Badge */}
+                      <div className="flex items-center gap-2 pt-1">
+                        <Badge className="bg-zinc-800 text-zinc-400 border-zinc-700">
+                          {session.pricingModel === 'per-kwh' && 'Pay Per kWh'}
+                          {session.pricingModel === 'subscription' && 'Subscription'}
+                          {session.pricingModel === 'free' && 'Free Charging'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Bottom Navigation (if needed for mobile) */}
-      <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 px-6 py-4 md:hidden">
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 px-6 py-4">
         <div className="flex items-center justify-around max-w-4xl mx-auto">
-          <button className="flex flex-col items-center gap-1 text-cyan-400">
+          <button 
+            onClick={() => setActiveTab('map')}
+            className={`flex flex-col items-center gap-1 transition-colors ${
+              activeTab === 'map' ? 'text-cyan-400' : 'text-zinc-500'
+            }`}
+          >
             <MapPin className="w-6 h-6" />
             <span>Map</span>
           </button>
-          <button className="flex flex-col items-center gap-1 text-zinc-500">
+          <button 
+            onClick={() => setActiveTab('sessions')}
+            className={`flex flex-col items-center gap-1 transition-colors ${
+              activeTab === 'sessions' ? 'text-cyan-400' : 'text-zinc-500'
+            }`}
+          >
             <Zap className="w-6 h-6" />
             <span>Sessions</span>
-          </button>
-          <button className="flex flex-col items-center gap-1 text-zinc-500">
-            <TrendingUp className="w-6 h-6" />
-            <span>Stats</span>
           </button>
         </div>
       </div>

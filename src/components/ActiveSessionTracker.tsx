@@ -16,6 +16,15 @@ export default function ActiveSessionTracker({ session, onEndSession }: ActiveSe
   const [energyAdded, setEnergyAdded] = useState(0);
   const [cost, setCost] = useState(0);
   const [stillCharging, setStillCharging] = useState<boolean | null>(null);
+  const [distanceUnit, setDistanceUnit] = useState<'mi' | 'km'>('mi');
+
+  // Load distance unit setting
+  useEffect(() => {
+    const savedDistanceUnit = localStorage.getItem('setting_distance_unit');
+    if (savedDistanceUnit) {
+      setDistanceUnit(savedDistanceUnit as 'mi' | 'km');
+    }
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -51,7 +60,11 @@ export default function ActiveSessionTracker({ session, onEndSession }: ActiveSe
   const elapsedMins = elapsedMinutes % 60;
   const totalMinutes = session.duration * 60;
   const progressPercent = Math.min((elapsedMinutes / totalMinutes) * 100, 100);
-  const milesAdded = Math.round(energyAdded * 3.5); // Rough estimate: 3.5 miles per kWh
+  
+  // Calculate distance based on unit preference
+  const distanceAdded = distanceUnit === 'mi' 
+    ? Math.round(energyAdded * 3.5) // 3.5 miles per kWh
+    : Math.round(energyAdded * 5.6); // 5.6 km per kWh
 
   return (
     <motion.div
@@ -104,7 +117,7 @@ export default function ActiveSessionTracker({ session, onEndSession }: ActiveSe
               <p className="text-zinc-400">Energy</p>
             </div>
             <p className="text-cyan-400">{energyAdded.toFixed(1)} kWh</p>
-            <p className="text-zinc-500">~{milesAdded} miles</p>
+            <p className="text-zinc-500">~{distanceAdded} {distanceUnit}</p>
           </Card>
 
           {/* Cost */}
@@ -150,7 +163,7 @@ export default function ActiveSessionTracker({ session, onEndSession }: ActiveSe
               </div>
               <p className="text-zinc-400">Impact</p>
             </div>
-            <p className="text-emerald-400">{milesAdded} mi</p>
+            <p className="text-emerald-400">{distanceAdded} {distanceUnit}</p>
             <p className="text-zinc-500">Could've driven</p>
           </Card>
         </div>

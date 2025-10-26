@@ -5,7 +5,7 @@ import { Slider } from './ui/slider';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Input } from './ui/input';
 import { Separator } from './ui/separator';
-import { Zap, DollarSign, MapPin, Smartphone, Hand } from 'lucide-react';
+import { Zap, DollarSign, MapPin, Smartphone, Hand, Ruler } from 'lucide-react';
 
 interface SettingsProps {
   onClose: () => void;
@@ -16,6 +16,7 @@ export default function Settings({ onClose }: SettingsProps) {
   const [defaultSpeed, setDefaultSpeed] = useState(11);
   const [defaultPricingModel, setDefaultPricingModel] = useState<'per-kwh' | 'subscription' | 'free'>('per-kwh');
   const [defaultPrice, setDefaultPrice] = useState(0.30);
+  const [distanceUnit, setDistanceUnit] = useState<'mi' | 'km'>('mi');
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -23,11 +24,13 @@ export default function Settings({ onClose }: SettingsProps) {
     const savedSpeed = localStorage.getItem('setting_default_speed');
     const savedPricingModel = localStorage.getItem('setting_pricing_model');
     const savedPrice = localStorage.getItem('setting_default_price');
+    const savedDistanceUnit = localStorage.getItem('setting_distance_unit');
 
     if (savedAutoLogging !== null) setAutoLogging(savedAutoLogging === 'true');
     if (savedSpeed !== null) setDefaultSpeed(parseFloat(savedSpeed));
     if (savedPricingModel !== null) setDefaultPricingModel(savedPricingModel as any);
     if (savedPrice !== null) setDefaultPrice(parseFloat(savedPrice));
+    if (savedDistanceUnit !== null) setDistanceUnit(savedDistanceUnit as 'mi' | 'km');
   }, []);
 
   const handleSave = () => {
@@ -35,6 +38,7 @@ export default function Settings({ onClose }: SettingsProps) {
     localStorage.setItem('setting_default_speed', defaultSpeed.toString());
     localStorage.setItem('setting_pricing_model', defaultPricingModel);
     localStorage.setItem('setting_default_price', defaultPrice.toString());
+    localStorage.setItem('setting_distance_unit', distanceUnit);
     onClose();
   };
 
@@ -114,6 +118,37 @@ export default function Settings({ onClose }: SettingsProps) {
           </div>
           <p className="text-zinc-400">{getSpeedLabel(defaultSpeed)}</p>
         </div>
+      </div>
+
+      <Separator className="bg-zinc-800" />
+
+      {/* Distance Unit */}
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-cyan-400 flex items-center gap-2">
+            <Ruler className="w-4 h-4" />
+            Distance Unit
+          </h3>
+          <p className="text-zinc-500 mt-1">Display distances in miles or kilometers</p>
+        </div>
+
+        <RadioGroup value={distanceUnit} onValueChange={(value: any) => setDistanceUnit(value)}>
+          <div className="flex gap-2">
+            <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
+              distanceUnit === 'mi' ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-zinc-900 border-zinc-800'
+            }`}>
+              <RadioGroupItem value="mi" id="distance-mi" />
+              <p className="text-zinc-200">Miles</p>
+            </label>
+
+            <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
+              distanceUnit === 'km' ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-zinc-900 border-zinc-800'
+            }`}>
+              <RadioGroupItem value="km" id="distance-km" />
+              <p className="text-zinc-200">Kilometers</p>
+            </label>
+          </div>
+        </RadioGroup>
       </div>
 
       <Separator className="bg-zinc-800" />
